@@ -77,11 +77,13 @@ def main():
     # 4. Mathematical Function Description
     print("\n4. Mathematical Function:")
     print("-" * 25)
-    print("P(x,y,f) = [B + Σᵢ Aᵢ·exp(-α·((x-xᵢ)² + (y-yᵢ)²)/rᵢ²)] × (1+p)^(f-1) × N")
+    print(
+        "P(x,y,f) = max(B, max(Aᵢ·exp(-α·((x-xᵢ)² + (y-yᵢ)²)/rᵢ²))) × (1+p)^(f-1) × N"
+    )
     print()
     print("Where:")
     print("  P(x,y,f) = Price at location (x,y) and floor f")
-    print("  B        = Base price (distant areas)")
+    print("  B        = Base price (minimum price, distant areas)")
     print("  Aᵢ       = Peak price influence of center i")
     print("  (xᵢ,yᵢ)  = Coordinates of high-end center i")
     print("  rᵢ       = Influence radius of center i")
@@ -89,6 +91,7 @@ def main():
     print("  p        = Floor premium rate")
     print("  f        = Floor number")
     print("  N        = Noise factor (random variation)")
+    print("  max()    = Takes maximum influence (no additive effects)")
 
     # 5. Custom City Configuration
     print("\n5. Custom City Example:")
@@ -109,7 +112,7 @@ def main():
         "base_price": 150,
         "floor_premium": 0.08,  # 8% premium per floor
         "distance_decay": 0.4,
-        "noise_factor": 0.05,
+        "noise_factor": 0.001,
     }
 
     # Compare prices in custom city

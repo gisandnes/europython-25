@@ -60,7 +60,7 @@ def house_price_model(x, y, floor):
     # Initialize price with base price
     price = base_price
 
-    # Add influence from each high-end center
+    # Calculate influence from each high-end center and take maximum
     for center in high_end_centers:
         # Calculate distance from this center
         distance = math.sqrt((x - center["x"]) ** 2 + (y - center["y"]) ** 2)
@@ -71,8 +71,8 @@ def house_price_model(x, y, floor):
             -distance_decay * normalized_distance**2
         )
 
-        # Add this center's influence to the total price
-        price += influence
+        # Take maximum between current price and this center's influence
+        price = max(price, influence)
 
     # Apply floor premium (compound growth)
     floor_multiplier = (1 + floor_premium) ** (floor - 1)
@@ -86,16 +86,17 @@ def main():
     print("=" * 55)
 
     print("\nMathematical Formula:")
-    print("P(x,y,f) = [B + Σᵢ Aᵢ·exp(-α·((x-xᵢ)² + (y-yᵢ)²)/rᵢ²)] × (1+p)^(f-1)")
+    print("P(x,y,f) = max(B, max(Aᵢ·exp(-α·((x-xᵢ)² + (y-yᵢ)²)/rᵢ²))) × (1+p)^(f-1)")
     print("\nWhere:")
     print("  P(x,y,f) = Price at location (x,y) and floor f")
-    print("  B        = Base price (distant areas) = 200k")
+    print("  B        = Base price (minimum price) = 200k")
     print("  Aᵢ       = Peak price influence of center i")
     print("  (xᵢ,yᵢ)  = Coordinates of high-end center i")
     print("  rᵢ       = Influence radius of center i")
     print("  α        = Distance decay factor = 0.3")
     print("  p        = Floor premium rate = 5%")
     print("  f        = Floor number")
+    print("  max()    = Takes maximum influence (no additive effects)")
 
     print("\nHigh-End Centers:")
     centers = [

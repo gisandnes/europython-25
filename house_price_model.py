@@ -41,31 +41,31 @@ def house_price_model(x, y, floor, city_params=None):
                     "x": 0,
                     "y": 0,
                     "peak_price": 2000,
-                    "influence_radius": 5,
+                    "influence_radius": 2,
                 },  # City center
                 {
                     "x": 2,
                     "y": 1,
                     "peak_price": 1500,
-                    "influence_radius": 3,
+                    "influence_radius": 2.5,
                 },  # Financial district
                 {
                     "x": -1,
                     "y": 3,
                     "peak_price": 1200,
-                    "influence_radius": 2.5,
+                    "influence_radius": 1.5,
                 },  # Cultural district
                 {
                     "x": 1,
                     "y": -2,
-                    "peak_price": 1000,
-                    "influence_radius": 2,
+                    "peak_price": 1800,
+                    "influence_radius": 2.5,
                 },  # Business district
             ],
-            "base_price": 200,  # Base price for remote areas
-            "floor_premium": 0.05,  # 5% price increase per floor
+            "base_price": 500,  # Base price for remote areas
+            "floor_premium": 0.02,  # 5% price increase per floor
             "distance_decay": 0.3,  # How quickly prices decay with distance
-            "noise_factor": 0.1,  # Random variation factor
+            "noise_factor": 0.001,  # Random variation factor
         }
 
         # Convert inputs to numpy arrays for vectorized operations
@@ -78,10 +78,10 @@ def house_price_model(x, y, floor, city_params=None):
     broadcast_result = np.broadcast(x, y, floor)
     broadcast_shape = broadcast_result.shape
 
-    # Initialize price with base price using the correct broadcast shape
+    # Initialize price with base price
     price = np.full(broadcast_shape, city_params["base_price"], dtype=float)
 
-    # Add influence from each high-end center
+    # Calculate influence from each high-end center and take maximum
     for center in city_params["high_end_centers"]:
         # Calculate distance from this center
         distance = np.sqrt((x - center["x"]) ** 2 + (y - center["y"]) ** 2)
@@ -92,8 +92,8 @@ def house_price_model(x, y, floor, city_params=None):
             * (distance / center["influence_radius"]) ** 2
         )
 
-        # Add this center's influence to the total price
-        price += influence
+        # Take maximum between current price and this center's influence
+        price = np.maximum(price, influence)
 
     # Apply floor premium (compound growth)
     floor_multiplier = (1 + city_params["floor_premium"]) ** (floor - 1)
