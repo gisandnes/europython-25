@@ -8,3 +8,5 @@ wheels/
 
 # Virtual environments
 .venv
+price_heatmap_*.html
+price_surface_*.html
