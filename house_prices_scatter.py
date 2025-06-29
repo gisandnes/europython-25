@@ -274,6 +274,34 @@ def main() -> None:
     print("   - house_prices_scatter.html")
 
 
+def penalty(distance_km: float, alpha: float = np.log(2) / 15) -> float:
+    """
+    Compute the commute penalty based on distance (in km),
+    assuming a travel speed of 2 km/h (i.e., 30 minutes per km).
+
+    f(t) = max(0, exp(alpha * (t - 15)) - 1)
+      where t is travel time in minutes,
+      and alpha = ln(2) / 15 so that f(30) = 1.
+
+    Parameters
+    ----------
+    distance_km : float
+        One-way commute distance in kilometers.
+    alpha : float
+        Penalty factor.
+
+    Returns
+    -------
+    float
+        Penalty score (≈0 for t ≤ 15 min, 1 at t = 30 min, grows exponentially thereafter).
+    """
+    # Convert distance to time in minutes
+    time_min = distance_km * 30.0
+
+    # Compute the exponential penalty
+    return max(0.0, np.exp(alpha * (time_min - 15.0)) - 1.0)
+
+
 if __name__ == "__main__":
     # Run the demo
     main()
