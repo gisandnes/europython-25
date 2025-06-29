@@ -10,3 +10,8 @@ wheels/
 .venv
 price_heatmap_*.html
 price_surface_*.html
+house_prices_*.html
+
+# Cursor AI specific files
+.cursor-chat-context.md
+.cursorrules
