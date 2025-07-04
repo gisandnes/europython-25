@@ -8,11 +8,18 @@ This module implements a mathematical function that models house prices based on
 4. Smooth price decay from premium locations
 """
 
+import json
+from pathlib import Path
 import numpy as np
+from typing import Optional
+
 import plotly.graph_objects as go
 
 
-def house_price_model(x, y, floor, city_params=None):
+DEFAULT_CITY_DEFINITION_PATH = Path(__file__).parent / "city_definition.json"
+
+
+def house_price_model(x, y, floor, city_params: Optional[dict] = None):
     """
     Calculate house prices based on location and floor number.
 
@@ -35,38 +42,7 @@ def house_price_model(x, y, floor, city_params=None):
 
     # Default city parameters
     if city_params is None:
-        city_params = {
-            "high_end_centers": [
-                {
-                    "x": 0,
-                    "y": 0,
-                    "peak_price": 2000,
-                    "influence_radius": 2,
-                },  # City center
-                {
-                    "x": 2,
-                    "y": 1,
-                    "peak_price": 1500,
-                    "influence_radius": 2.5,
-                },  # Financial district
-                {
-                    "x": -1,
-                    "y": 3,
-                    "peak_price": 1200,
-                    "influence_radius": 1.5,
-                },  # Cultural district
-                {
-                    "x": 1,
-                    "y": -2,
-                    "peak_price": 1800,
-                    "influence_radius": 2.5,
-                },  # Business district
-            ],
-            "base_price": 500,  # Base price for remote areas
-            "floor_premium": 0.02,  # 5% price increase per floor
-            "distance_decay": 0.3,  # How quickly prices decay with distance
-            "noise_factor": 0.001,  # Random variation factor
-        }
+        city_params = load_city_params(DEFAULT_CITY_DEFINITION_PATH)
 
         # Convert inputs to numpy arrays for vectorized operations
     x = np.asarray(x)
@@ -109,6 +85,24 @@ def house_price_model(x, y, floor, city_params=None):
         price *= noise
 
     return price
+
+
+def load_city_params(path: Path) -> dict:
+    """
+    Load model parameters from a JSON file.
+
+    Parameters:
+    -----------
+    path: Path
+        An existing JSON file
+
+    Returns:
+    --------
+    params: dict
+        A dictionary with parameters (unchecked for correctness)
+    """
+    with path.open() as f:
+        return json.load(f)
 
 
 def visualize_price_surface(
