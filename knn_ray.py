@@ -43,7 +43,7 @@ def create_grid() -> tuple[np.ndarray, ...]:
 
 @ray.remote
 def compute_prices(query_points, data_points):
-    indices = knn_search(query_points=query_points, dataset=data_points)
+    indices = knn_search.remote(query_points, data_points, 4)
     # Compute average of price in indices
     # compose together
     return 0
@@ -65,6 +65,10 @@ if __name__ == "__main__":
 
     x, y = create_grid()
     query_points = np.vstack([x, y, np.ones(x.shape[0])])
+
+    ray.init()
+    f = compute_prices.remote(query_points, data_points)
+    ray.get(f)
 
 
     # Split the grid in batches
