@@ -1,5 +1,8 @@
 import numpy as np
 import ray
+import polars as pl
+from pathlib import Path
+
 
 def calculate_distances(query_points: np.ndarray, dataset: np.ndarray) -> np.ndarray:
     return np.sqrt(np.sum((dataset[:, np.newaxis, :] - query_points) ** 2, axis=-1))
@@ -24,11 +27,18 @@ def knn_search(
 def create_grid() -> tuple[np.ndarray, ...]:
     """
     Create a homogenous grid of points to create a map.
+
+    Returns:
+    --------
+
     """
     # TODO: Add floor
     x = np.linspace(-LIMIT, LIMIT, N_POINTS)
     y = np.linspace(-LIMIT, LIMIT, N_POINTS)
-    return np.meshgrid(x, y)
+    return tuple(
+        arr.flatten() for arr in
+        np.meshgrid(x, y)
+    )
 
 
 @ray.remote
@@ -39,11 +49,23 @@ def compute_prices(query_points, data_points):
     return 0
 
 
-if __name__ == "___main__":
-    ray.init()
+def load_data_points(path: Path = Path("data.parquet")) -> np.ndarray:
+    df = pl.read_parquet(path)
+    return np.vstack([
+        df["x"].to_numpy(),
+        df["y"].to_numpy(),
+        df["floor"].to_numpy(),
+        df["price"].to_numpy()
+    ])
+
+
+if __name__ == "__main__":
+    # ray.init()
+    data_points = load_data_points()
 
     x, y = create_grid()
-    data = np.hstack([x, y, 1])
+    query_points = np.vstack([x, y, np.ones(x.shape[0])])
+
 
     # Split the grid in batches
     # Compute prices & compose together
