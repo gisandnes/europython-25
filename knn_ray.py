@@ -26,11 +26,11 @@ LIMIT = 10
 DEFAULT_K = 4
 
 
-# @ray.remote
+@ray.remote
 def knn_search(
     query_points: np.ndarray,
     dataset: np.ndarray,
-    k: int = DEFAULT_K,
+    k: int,
     distances_func=calculate_distances,
 ):
     """
@@ -67,7 +67,7 @@ def create_grid() -> tuple[np.ndarray, ...]:
     )
 
 
-# @ray.remote
+@ray.remote
 def compute_prices(query_points, data_points):
     """
     Find prices for N data_points.
@@ -77,7 +77,9 @@ def compute_prices(query_points, data_points):
     prices: np.ndarray
         (N,) array of prices
     """
-    indices = knn_search(query_points, data_points, 4)
+    indices = ray.get(
+        knn_search.remote(query_points, data_points, DEFAULT_K)
+    )
     prices: np.ndarray = data_points[3][indices]
     return prices.mean(axis=1)
 
@@ -98,11 +100,13 @@ if __name__ == "__main__":
     x, y = create_grid()
     query_points = np.vstack([x, y, np.ones(x.shape[0])])
 
-    #ray.init()
-    # TODO: Do this remotely, in batches
-    prices = compute_prices(query_points, data_points)
-    # output = np.vstack([query_points, prices[np.newaxis]])
+    ray.init()
 
+    # TODO: Do this in batches
+    prices_future = compute_prices.remote(query_points, data_points)
+    prices = ray.get(
+        compute_prices.remote(query_points, data_points)
+    )
     output_df = pl.DataFrame({
         "x": query_points[0],
         "y": query_points[1],
@@ -110,5 +114,3 @@ if __name__ == "__main__":
         "price": prices
     })
     output_df.write_parquet("grid.parquet")
-
-    # ray.get(f)
