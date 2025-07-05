@@ -5,10 +5,17 @@ from pathlib import Path
 
 
 def calculate_distances(query_points: np.ndarray, dataset: np.ndarray) -> np.ndarray:
-    # Expand for broadcasting
-    query_points = query_points[:, np.newaxis]
-    dataset = dataset[:3, :, np.newaxis]
+    """
+    Calculate mutual distances between M query and N reference points.
 
+    Returns:
+    --------
+    distances: np.ndarray
+        (N, M) array of the distances
+    """
+    # Expand for broadcasting
+    query_points = query_points[:, :, np.newaxis]
+    dataset = dataset[:3, np.newaxis]
     return np.sqrt(
         np.sum((dataset - query_points) ** 2, axis=0)
     )
@@ -16,17 +23,26 @@ def calculate_distances(query_points: np.ndarray, dataset: np.ndarray) -> np.nda
 
 N_POINTS = 10
 LIMIT = 10
+DEFAULT_K = 4
 
 
 # @ray.remote
 def knn_search(
     query_points: np.ndarray,
     dataset: np.ndarray,
-    k: int,
+    k: int = DEFAULT_K,
     distances_func=calculate_distances,
 ):
-    distances = distances_func(query_points, dataset)
-    breakpoint()
+    """
+    Find k nearest neighbour reference point indices for N query points.
+
+    Returns:
+    --------
+    indices: np.ndarray
+        (N, k) matrix of integral indices
+
+    """
+    distances = distances_func(query_points, dataset).T
     nearest_indices = np.argpartition(distances, k, axis=0)[:k].T
     return nearest_indices
 
@@ -37,7 +53,10 @@ def create_grid() -> tuple[np.ndarray, ...]:
 
     Returns:
     --------
-
+    x: np.ndarray
+        Flattened (N_POINTS x N_POINTS,) array of x values
+    y: np.ndarray
+        Flattened (N_POINTS x N_POINTS,) array of x values
     """
     # TODO: Add floor
     x = np.linspace(-LIMIT, LIMIT, N_POINTS)
@@ -50,11 +69,17 @@ def create_grid() -> tuple[np.ndarray, ...]:
 
 # @ray.remote
 def compute_prices(query_points, data_points):
+    """
+    Find prices for N data_points.
+
+    Returns:
+    --------
+    prices: np.ndarray
+        (N,) array of prices
+    """
     indices = knn_search(query_points, data_points, 4)
-    # indices = knn_search.remote(query_points, data_points, 4)
-    # Compute average of price in indices
-    # compose together
-    return 0
+    prices: np.ndarray = data_points[3][indices]
+    return prices.mean(axis=1)
 
 
 def load_data_points(path: Path = Path("data.parquet")) -> np.ndarray:
@@ -68,19 +93,22 @@ def load_data_points(path: Path = Path("data.parquet")) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    # ray.init()
     data_points = load_data_points()
 
     x, y = create_grid()
     query_points = np.vstack([x, y, np.ones(x.shape[0])])
 
     #ray.init()
-    f = compute_prices(query_points, data_points)
-    # f = compute_prices.remote(query_points, data_points)
+    # TODO: Do this remotely, in batches
+    prices = compute_prices(query_points, data_points)
+    # output = np.vstack([query_points, prices[np.newaxis]])
+
+    output_df = pl.DataFrame({
+        "x": query_points[0],
+        "y": query_points[1],
+        "floor": query_points[2],
+        "price": prices
+    })
+    output_df.write_parquet("grid.parquet")
+
     # ray.get(f)
-
-
-    # Split the grid in batches
-    # Compute prices & compose together
-    #
-    # Plot
