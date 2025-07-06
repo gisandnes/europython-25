@@ -53,7 +53,7 @@ def define_target_locations() -> list[Location]:
 
 
 @jax.jit
-def total_distance_objective(candidate_location: jnp.ndarray, target_locations: jnp.ndarray) -> float:
+def total_distance_objective(candidate_location: jnp.ndarray, target_locations: jnp.ndarray) -> jnp.ndarray:
     """
     Compute the total distance from a candidate location to all target locations.
 
@@ -70,8 +70,8 @@ def total_distance_objective(candidate_location: jnp.ndarray, target_locations: 
 
     Returns:
     --------
-    float
-        Total distance to all target locations
+    jnp.ndarray
+        Total distance to all target locations (scalar array)
     """
     # Reshape candidate_location to be 2D for batch distance calculation
     candidate_reshaped = candidate_location.reshape(1, -1)
@@ -115,24 +115,27 @@ def numerical_gradient(
     return grad
 
 
-def gradient_descent_jax(
+def gradient_descent(
     target_locations: jnp.ndarray,
+    grad_func: Callable[[jnp.ndarray], jnp.ndarray],
     initial_guess: jnp.ndarray = jnp.array([0.0, 0.0]),
     learning_rate: float = 0.1,
     max_iterations: int = 1000,
     tolerance: float = 1e-6,
 ) -> OptimisationResult:
     """
-    Solve the location optimisation problem using JAX autograd and gradient descent.
+    Solve the location optimisation problem using gradient descent.
 
-    This function demonstrates the power of automatic differentiation by using
-    JAX to compute exact gradients efficiently, enabling faster convergence
-    compared to numerical gradient methods.
+    This unified function works with any gradient computation method by accepting
+    the gradient function as a parameter. This allows for easy comparison between
+    different gradient computation approaches (JAX autograd vs numerical).
 
     Parameters:
     -----------
     target_locations : jnp.ndarray
         Array of target locations, shape (n_locations, 2)
+    grad_func : Callable[[jnp.ndarray], jnp.ndarray]
+        Function that computes the gradient of the objective function
     initial_guess : jnp.ndarray
         Starting point for optimisation [x, y]
     learning_rate : float
@@ -152,32 +155,25 @@ def gradient_descent_jax(
     # Create the objective function with target locations fixed
     objective_func = lambda x: total_distance_objective(x, target_locations)
 
-    # Use JAX to compute the gradient function automatically
-    grad_func = jax.grad(objective_func)
-
     # Initialise optimisation variables
     current_location = initial_guess
     convergence_history = []
 
     for iteration in range(max_iterations):
-        # Compute objective value and gradient using JAX autograd
+        # Compute objective value and gradient
         current_cost = objective_func(current_location)
         gradient = grad_func(current_location)
 
         convergence_history.append(float(current_cost))
 
-        # Check convergence based on gradient norm
         gradient_norm = jnp.linalg.norm(gradient)
-        if gradient_norm < tolerance:
-            print(f"✅ Converged after {iteration} iterations (gradient norm: {gradient_norm:.2e})")
-            break
 
         # Update location using gradient descent
         current_location = current_location - learning_rate * gradient
 
         # Print progress every 100 iterations
         if iteration % 100 == 0:
-            print(f"Iteration {iteration}: Cost = {current_cost:.4f}, Gradient norm = {gradient_norm:.2e}")
+            print(f"Iteration {iteration}: Cost = {float(current_cost):.4f}, Gradient norm = {gradient_norm:.2e}")
 
     end_time = time.perf_counter()
     computation_time = end_time - start_time
@@ -193,7 +189,7 @@ def gradient_descent_jax(
     )
 
 
-def gradient_descent_numerical(
+def gradient_descent_jax(
     target_locations: jnp.ndarray,
     initial_guess: jnp.ndarray = jnp.array([0.0, 0.0]),
     learning_rate: float = 0.1,
@@ -201,11 +197,10 @@ def gradient_descent_numerical(
     tolerance: float = 1e-6,
 ) -> OptimisationResult:
     """
-    Solve the location optimisation problem using numerical gradients.
+    Solve the location optimisation problem using JAX autograd and gradient descent.
 
-    This function provides a comparison baseline by using numerical
-    differentiation instead of automatic differentiation. It should
-    be slower than the JAX version while achieving similar results.
+    This function is a convenience wrapper around the generic gradient_descent function
+    that uses JAX's automatic differentiation to compute exact gradients efficiently.
 
     Parameters:
     -----------
@@ -225,46 +220,67 @@ def gradient_descent_numerical(
     OptimisationResult
         Complete results including optimal location and convergence history
     """
-    start_time = time.perf_counter()
-
     # Create the objective function with target locations fixed
     objective_func = lambda x: total_distance_objective(x, target_locations)
 
-    # Initialise optimisation variables
-    current_location = initial_guess
-    convergence_history = []
+    # Use JAX to compute the gradient function automatically
+    grad_func = jax.grad(objective_func)
 
-    for iteration in range(max_iterations):
-        # Compute objective value and numerical gradient
-        current_cost = objective_func(current_location)
-        gradient = numerical_gradient(objective_func, current_location)
+    return gradient_descent(
+        target_locations=target_locations,
+        grad_func=grad_func,
+        initial_guess=initial_guess,
+        learning_rate=learning_rate,
+        max_iterations=max_iterations,
+        tolerance=tolerance,
+    )
 
-        convergence_history.append(float(current_cost))
 
-        # Check convergence based on gradient norm
-        gradient_norm = jnp.linalg.norm(gradient)
-        if gradient_norm < tolerance:
-            print(f"✅ Converged after {iteration} iterations (gradient norm: {gradient_norm:.2e})")
-            break
+def gradient_descent_numerical(
+    target_locations: jnp.ndarray,
+    initial_guess: jnp.ndarray = jnp.array([0.0, 0.0]),
+    learning_rate: float = 0.1,
+    max_iterations: int = 1000,
+    tolerance: float = 1e-6,
+) -> OptimisationResult:
+    """
+    Solve the location optimisation problem using numerical gradients.
 
-        # Update location using gradient descent
-        current_location = current_location - learning_rate * gradient
+    This function is a convenience wrapper around the generic gradient_descent function
+    that uses numerical differentiation to approximate gradients. It provides a
+    comparison baseline against JAX's automatic differentiation.
 
-        # Print progress every 100 iterations
-        if iteration % 100 == 0:
-            print(f"Iteration {iteration}: Cost = {current_cost:.4f}, Gradient norm = {gradient_norm:.2e}")
+    Parameters:
+    -----------
+    target_locations : jnp.ndarray
+        Array of target locations, shape (n_locations, 2)
+    initial_guess : jnp.ndarray
+        Starting point for optimisation [x, y]
+    learning_rate : float
+        Step size for gradient descent
+    max_iterations : int
+        Maximum number of iterations
+    tolerance : float
+        Convergence threshold for gradient norm
 
-    end_time = time.perf_counter()
-    computation_time = end_time - start_time
+    Returns:
+    --------
+    OptimisationResult
+        Complete results including optimal location and convergence history
+    """
+    # Create the objective function with target locations fixed
+    objective_func = lambda x: total_distance_objective(x, target_locations)
 
-    final_cost = objective_func(current_location)
+    # Create numerical gradient function
+    grad_func = lambda x: numerical_gradient(objective_func, x)
 
-    return OptimisationResult(
-        optimal_location=current_location,
-        final_cost=float(final_cost),
-        iterations=iteration + 1,
-        convergence_history=convergence_history,
-        computation_time=computation_time,
+    return gradient_descent(
+        target_locations=target_locations,
+        grad_func=grad_func,
+        initial_guess=initial_guess,
+        learning_rate=learning_rate,
+        max_iterations=max_iterations,
+        tolerance=tolerance,
     )
 
 
