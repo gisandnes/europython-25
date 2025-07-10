@@ -3,6 +3,11 @@ import ray
 import polars as pl
 from pathlib import Path
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def calculate_distances(query_points: np.ndarray, dataset: np.ndarray) -> np.ndarray:
     """
@@ -16,9 +21,7 @@ def calculate_distances(query_points: np.ndarray, dataset: np.ndarray) -> np.nda
     # Expand for broadcasting
     query_points = query_points[:, :, np.newaxis]
     dataset = dataset[:3, np.newaxis]
-    return np.sqrt(
-        np.sum((dataset - query_points) ** 2, axis=0)
-    )
+    return np.sqrt(np.sum((dataset - query_points) ** 2, axis=0))
 
 
 N_POINTS = 10
@@ -61,10 +64,7 @@ def create_grid() -> tuple[np.ndarray, ...]:
     # TODO: Add floor
     x = np.linspace(-LIMIT, LIMIT, N_POINTS)
     y = np.linspace(-LIMIT, LIMIT, N_POINTS)
-    return tuple(
-        arr.flatten() for arr in
-        np.meshgrid(x, y)
-    )
+    return tuple(arr.flatten() for arr in np.meshgrid(x, y))
 
 
 @ray.remote
@@ -84,12 +84,14 @@ def compute_prices(query_points, data_points):
 
 def load_data_points(path: Path = Path("data.parquet")) -> np.ndarray:
     df = pl.read_parquet(path)
-    return np.vstack([
-        df["x"].to_numpy(),
-        df["y"].to_numpy(),
-        df["floor"].to_numpy(),
-        df["price"].to_numpy()
-    ])
+    return np.vstack(
+        [
+            df["x"].to_numpy(),
+            df["y"].to_numpy(),
+            df["floor"].to_numpy(),
+            df["price"].to_numpy(),
+        ]
+    )
 
 
 if __name__ == "__main__":
@@ -103,10 +105,13 @@ if __name__ == "__main__":
     # TODO: Do this in batches
     prices_task = compute_prices.remote(query_points, data_points)
     prices = ray.get(prices_task)
-    output_df = pl.DataFrame({
-        "x": query_points[0],
-        "y": query_points[1],
-        "floor": query_points[2],
-        "price": prices
-    })
+    output_df = pl.DataFrame(
+        {
+            "x": query_points[0],
+            "y": query_points[1],
+            "floor": query_points[2],
+            "price": prices,
+        }
+    )
     output_df.write_parquet("grid.parquet")
+    logger.info("Saved grid.parquet")
