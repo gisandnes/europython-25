@@ -26,7 +26,7 @@ LIMIT = 10
 DEFAULT_K = 4
 
 
-@ray.remote
+# @ray.remote
 def knn_search(
     query_points: np.ndarray,
     dataset: np.ndarray,
@@ -77,9 +77,7 @@ def compute_prices(query_points, data_points):
     prices: np.ndarray
         (N,) array of prices
     """
-    indices = ray.get(
-        knn_search.remote(query_points, data_points, DEFAULT_K)
-    )
+    indices = knn_search(query_points, data_points, DEFAULT_K)
     prices: np.ndarray = data_points[3][indices]
     return prices.mean(axis=1)
 
@@ -103,10 +101,8 @@ if __name__ == "__main__":
     ray.init()
 
     # TODO: Do this in batches
-    prices_future = compute_prices.remote(query_points, data_points)
-    prices = ray.get(
-        compute_prices.remote(query_points, data_points)
-    )
+    prices_task = compute_prices.remote(query_points, data_points)
+    prices = ray.get(prices_task)
     output_df = pl.DataFrame({
         "x": query_points[0],
         "y": query_points[1],
