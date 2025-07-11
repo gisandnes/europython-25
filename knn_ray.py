@@ -50,7 +50,7 @@ def knn_search(
     return nearest_indices
 
 
-def create_grid() -> tuple[np.ndarray, ...]:
+def create_grid(n_points: int = N_POINTS) -> tuple[np.ndarray, ...]:
     """
     Create a homogenous grid of points to create a map.
 
@@ -62,9 +62,23 @@ def create_grid() -> tuple[np.ndarray, ...]:
         Flattened (N_POINTS x N_POINTS,) array of x values
     """
     # TODO: Add floor
-    x = np.linspace(-LIMIT, LIMIT, N_POINTS)
-    y = np.linspace(-LIMIT, LIMIT, N_POINTS)
+    x = np.linspace(-LIMIT, LIMIT, n_points)
+    y = np.linspace(-LIMIT, LIMIT, n_points)
     return tuple(arr.flatten() for arr in np.meshgrid(x, y))
+
+
+def create_query_points(n_points: int = N_POINTS, floor: int = 1) -> np.ndarray:
+    """
+    Create a homogenous grid of points with a floor to create a map.
+
+    Returns:
+    --------
+    query_points: np.ndarray
+        (n_points x n_points, 3) array of query points
+    """
+    x, y = create_grid(n_points=n_points)
+    return np.vstack([x, y, np.ones(x.shape[0]) * floor])
+
 
 
 @ray.remote
@@ -83,6 +97,15 @@ def compute_prices(query_points, data_points):
 
 
 def load_data_points(path: Path = Path("data.parquet")) -> np.ndarray:
+    """
+    Load reference data points from a Parquet file.
+
+    Returns:
+    --------
+    data_points: np.ndarray
+        (N, 4) array of data points with x, y, floor, and price columns
+    """
+
     df = pl.read_parquet(path)
     return np.vstack(
         [
@@ -95,12 +118,10 @@ def load_data_points(path: Path = Path("data.parquet")) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    data_points = load_data_points()
-
-    x, y = create_grid()
-    query_points = np.vstack([x, y, np.ones(x.shape[0])])
-
     ray.init()
+
+    data_points = load_data_points()
+    query_points = create_query_points()
 
     # TODO: Do this in batches
     prices_task = compute_prices.remote(query_points, data_points)
