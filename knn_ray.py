@@ -97,6 +97,15 @@ def compute_prices(query_points, data_points):
 
 
 def load_data_points(path: Path = Path("data.parquet")) -> np.ndarray:
+    """
+    Load reference data points from a Parquet file.
+
+    Returns:
+    --------
+    data_points: np.ndarray
+        (N, 4) array of data points with x, y, floor, and price columns
+    """
+
     df = pl.read_parquet(path)
     return np.vstack(
         [
