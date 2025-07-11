@@ -1,6 +1,5 @@
 [project]
 dependencies = [
-  "jax-metal>=0.1.1; platform_machine == 'arm64' and platform_system == 'Darwin'",
   "jax>=0.5.0",
   "numba>=0.61.2",
   "numpy>=2.2.5",
@@ -13,8 +12,13 @@ dependencies = [
   "click>=8.2.0",
   "polars>=1.31.0",
 ]
-description = "Add your description here"
 name = "accelerating-scientific-python"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 version = "0.1.0"
+
+[project.optional-dependencies]
+gpu = [
+  "jax-metal>=0.1.1; platform_machine == 'arm64' and platform_system == 'Darwin'",
+  "jax[cuda12]>=0.5.0",
+]
