@@ -20,11 +20,10 @@ if __name__ == "__main__":
 
     query_points = create_query_points(1000)
     batch_size = 1000
-    n_batches = query_points.shape[1] / batch_size
 
     query_point_batches = [
         query_points[:,i:i+batch_size]
-        for i in range(0, query_points.shape[1], batch_size)
+        for i in range(0, query_points.shape[1] // batch_size * batch_size, batch_size)
     ]
     logger.info(f"Submitting {len(query_point_batches)} batches of query points")
 
