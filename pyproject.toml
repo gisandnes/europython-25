@@ -1,19 +1,20 @@
 [project]
-name = "accelerating-scientific-python"
-version = "0.1.0"
+dependencies = [
+  "jax-metal>=0.1.1; platform_machine == 'arm64' and platform_system == 'Darwin'",
+  "jax>=0.5.0",
+  "numba>=0.61.2",
+  "numpy>=2.2.5",
+  "plotly>=6.0.1",
+  "ray[default]>=2.45.0",
+  "seaborn>=0.13.2",
+  "jupyter>=1.1.1",
+  "pytest>=8.3.5",
+  "scikit-learn>=1.6.1",
+  "click>=8.2.0",
+  "polars>=1.31.0",
+]
 description = "Add your description here"
+name = "accelerating-scientific-python"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "jax-metal>=0.1.1; platform_machine == 'arm64' and platform_system == 'Darwin'",
-    "jax>=0.6.0",
-    "numba>=0.61.2",
-    "numpy>=2.2.5",
-    "plotly>=6.0.1",
-    "ray[default]>=2.45.0",
-    "seaborn>=0.13.2",
-    "jupyter>=1.1.1",
-    "pytest>=8.3.5",
-    "scikit-learn>=1.6.1",
-    "polars>=1.31.0",
-]
+version = "0.1.0"

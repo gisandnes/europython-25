@@ -1,0 +1,32 @@
+{
+    "high_end_centers": [
+        {
+            "x": 0,
+            "y": 0,
+            "peak_price": 2000,
+            "influence_radius": 2
+        },
+        {
+            "x": 2,
+            "y": 1,
+            "peak_price": 1500,
+            "influence_radius": 2.5
+        },
+        {
+            "x": -1,
+            "y": 3,
+            "peak_price": 1200,
+            "influence_radius": 1.5
+        },
+        {
+            "x": 1,
+            "y": -2,
+            "peak_price": 1800,
+            "influence_radius": 2.5
+        }
+    ],
+    "base_price": 500,
+    "floor_premium": 0.02,
+    "distance_decay": 0.3,
+    "noise_factor": 0.001
+}
