@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 from sklearn.neighbors import NearestNeighbors
 
-import knn_numba
-from knn_numba import partition, quickselect_k_indices
+from this_tutorial import knn_numba
+from this_tutorial.knn_numba import partition, quickselect_k_indices
 
 
 @pytest.mark.parametrize(
@@ -81,9 +81,7 @@ def test_knn_numba_matches_sklearn(dataset, query_points, k):
         # Get all k neighbor points for this query point
         neighbor_points = dataset[test_indices_np[i, :]]  # Shape: (k, dims)
         # Calculate distances to all neighbors at once using broadcasting
-        test_distances_np[i, :] = np.sqrt(
-            np.sum((query_points[i] - neighbor_points) ** 2, axis=1)
-        )
+        test_distances_np[i, :] = np.sqrt(np.sum((query_points[i] - neighbor_points) ** 2, axis=1))
 
     # Sort distances for comparison (since neighbor order might differ)
     sklearn_distances_sorted = np.sort(distances, axis=1)

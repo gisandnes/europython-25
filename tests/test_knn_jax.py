@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from sklearn.neighbors import KNeighborsRegressor, NearestNeighbors
 
-import knn_jax
+from this_tutorial import knn_jax
 
 
 @pytest.fixture
@@ -55,9 +55,7 @@ def test_knn_jax_matches_sklearn(dataset, query_points, k, jax_device):
         # Get all k neighbor points for this query point
         neighbor_points = dataset[test_indices_np[i, :]]  # Shape: (k, dims)
         # Calculate distances to all neighbors at once using broadcasting
-        test_distances_np[i, :] = np.sqrt(
-            np.sum((query_points[i] - neighbor_points) ** 2, axis=1)
-        )
+        test_distances_np[i, :] = np.sqrt(np.sum((query_points[i] - neighbor_points) ** 2, axis=1))
 
     # Sort distances for comparison (since neighbor order might differ)
     sklearn_distances_sorted = np.sort(distances, axis=1)
@@ -80,21 +78,15 @@ class TestKNNRegressor:
         assert regressor.X_train_ is None
         assert regressor.y_train_ is None
 
-    def test_predict_without_fit_raises_error(
-        self, regression_data: tuple[jnp.ndarray, jnp.ndarray]
-    ):
+    def test_predict_without_fit_raises_error(self, regression_data: tuple[jnp.ndarray, jnp.ndarray]):
         """Test that predict raises error when called before fit."""
         X, _ = regression_data
         regressor = knn_jax.KNNRegressor()
 
-        with pytest.raises(
-            ValueError, match="This KNNRegressor instance is not fitted yet"
-        ):
+        with pytest.raises(ValueError, match="This KNNRegressor instance is not fitted yet"):
             regressor.predict(X[:5])
 
-    def test_basic_functionality(
-        self, regression_data: tuple[jnp.ndarray, jnp.ndarray]
-    ):
+    def test_basic_functionality(self, regression_data: tuple[jnp.ndarray, jnp.ndarray]):
         """Test basic fit and predict functionality."""
         X, y = regression_data
 
@@ -126,9 +118,7 @@ class TestKNNRegressor:
         single_pred = regressor.predict(X[:1])
         assert single_pred.shape == (1,)
 
-    def test_api_compatibility_with_sklearn(
-        self, regression_data: tuple[jnp.ndarray, jnp.ndarray]
-    ):
+    def test_api_compatibility_with_sklearn(self, regression_data: tuple[jnp.ndarray, jnp.ndarray]):
         """Test that our KNNRegressor has sklearn-compatible API."""
         X, y = regression_data
         X_train, X_test = X[:80], X[80:]
@@ -149,9 +139,7 @@ class TestKNNRegressor:
         assert jnp.all(jnp.isfinite(our_predictions))
         assert np.all(np.isfinite(sklearn_predictions))
 
-    def test_numerical_similarity_to_sklearn(
-        self, regression_data: tuple[jnp.ndarray, jnp.ndarray]
-    ):
+    def test_numerical_similarity_to_sklearn(self, regression_data: tuple[jnp.ndarray, jnp.ndarray]):
         """Test that our implementation gives numerically similar results to sklearn."""
         X, y = regression_data
         X_train, X_test = X[:80], X[80:]
@@ -223,6 +211,4 @@ class TestKNNRegressor:
         predictions_np = regressor.predict(X_test)
 
         # Results should be the same
-        np.testing.assert_allclose(
-            np.array(predictions_jax), np.array(predictions_np), rtol=1e-12
-        )
+        np.testing.assert_allclose(np.array(predictions_jax), np.array(predictions_np), rtol=1e-12)

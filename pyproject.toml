@@ -13,6 +13,7 @@ dependencies = [
   "polars>=1.31.0",
   "pandas~=2.0",
 ]
+description = "Workshop demonstrating performance optimisation techniques for scientific Python computations using JAX, Numba, and NumPy"
 name = "accelerating-scientific-python"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -24,3 +25,10 @@ gpu = [
   "jax[cuda12]>=0.5.0",
   "numba-cuda[cu12]; platform_system == 'Linux' and platform_machine == 'x86_64'",
 ]
+
+[build-system]
+build-backend = "flit_core.buildapi"
+requires = ["flit-core>=3.8.0"]
+
+[tool.flit.module]
+name = "this_tutorial"

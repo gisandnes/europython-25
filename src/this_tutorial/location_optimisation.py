@@ -13,7 +13,7 @@ import jax
 import jax.numpy as jnp
 import plotly.graph_objects as go
 
-from knn_jax import euclidean_distances
+from .knn_jax import euclidean_distances
 
 
 class Location(NamedTuple):
@@ -173,7 +173,9 @@ def gradient_descent(
 
         # Print progress every 100 iterations
         if iteration % 100 == 0:
-            print(f"Iteration {iteration}: Cost = {float(current_cost):.4f}, Gradient norm = {gradient_norm:.2e}")
+            print(
+                f"Iteration {iteration}: Cost = {float(current_cost):.4f}, Gradient norm = {gradient_norm:.2e}"
+            )
 
     end_time = time.perf_counter()
     computation_time = end_time - start_time
