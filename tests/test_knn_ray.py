@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from this_tutorial.knn_ray import create_grid, create_query_points, calculate_distances, knn_search
+from this_tutorial.knn_ray import create_grid, create_query_points, calculate_distances, knn_search, compute_prices
 
 
 def test_create_grid():
@@ -41,7 +41,7 @@ def test_calculate_distances():
 
 def test_knn_search():
     query_points = np.array([[0, 0, 1], [3, 3, 3]])
-    reference_points = np.array([[0, 0, 0], [1, 1, 0], [2, 2, 0], [1, 1, 1]])
+    reference_points = np.array([[0, 0, 0, 7], [1, 1, 0, 2], [2, 2, 0, 5], [1, 1, 1, 6]])
     
     k = 2
     indices = knn_search(query_points, reference_points, k)
@@ -50,3 +50,15 @@ def test_knn_search():
     expected_indices = np.array([[0, 3], [2, 3]])
 
     assert np.array_equal(indices, expected_indices) 
+
+
+def test_compute_prices():
+    query_points = np.array([[0, 0, 1], [3, 3, 3]])
+    reference_points = np.array([[0, 0, 0, 7], [1, 1, 0, 2], [2, 2, 0, 5], [1, 1, 1, 6]])
+    
+    prices = compute_prices(query_points, reference_points, k=2)
+    
+    assert prices.shape == (2,)
+    expected_prices = np.array([6.5, 5.5])
+    
+    assert_allclose(prices, expected_prices)

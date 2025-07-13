@@ -85,18 +85,26 @@ def create_query_points(n_points: int = N_POINTS, floor: int = 1) -> np.ndarray:
     return np.vstack([x, y, np.ones(x.shape[0]) * floor]).T
 
 
-@ray.remote
-def compute_prices(query_points, data_points):
+def compute_prices(query_points, reference_points, k: int = DEFAULT_K):
     """
     Find prices for N data_points.
+
+    Parameters:
+    ----------
+    query_points: np.ndarray
+        (N, 3) array of query points
+    reference_points: np.ndarray
+        (M, 4) array of data points with x, y, floor, and price
+    k: int
+        Number of nearest neighbors to consider
 
     Returns:
     --------
     prices: np.ndarray
         (N,) array of prices
     """
-    indices = knn_search(query_points, data_points, DEFAULT_K)
-    prices: np.ndarray = data_points[3][indices]
+    indices = knn_search(query_points, reference_points, k)
+    prices: np.ndarray = reference_points[indices, 3]
     return prices.mean(axis=1)
 
 
