@@ -1,12 +1,18 @@
-import numpy as np
-import ray
-import polars as pl
+# knn_ray + object store + batches
+import logging
 from pathlib import Path
 
-import logging
+import polars as pl
+import numpy as np
+import ray
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+N_POINTS = 10
+LIMIT = 10
+DEFAULT_K = 4
 
 
 def calculate_distances(query_points: np.ndarray, dataset: np.ndarray) -> np.ndarray:
@@ -23,10 +29,6 @@ def calculate_distances(query_points: np.ndarray, dataset: np.ndarray) -> np.nda
     dataset = dataset[:3, np.newaxis]
     return np.sqrt(np.sum((dataset - query_points) ** 2, axis=0))
 
-
-N_POINTS = 10
-LIMIT = 10
-DEFAULT_K = 4
 
 
 # @ray.remote
@@ -80,7 +82,6 @@ def create_query_points(n_points: int = N_POINTS, floor: int = 1) -> np.ndarray:
     return np.vstack([x, y, np.ones(x.shape[0]) * floor])
 
 
-
 @ray.remote
 def compute_prices(query_points, data_points):
     """
@@ -121,11 +122,25 @@ if __name__ == "__main__":
     ray.init()
 
     data_points = load_data_points()
-    query_points = create_query_points()
+    data_points_ref = ray.put(data_points)  # Store this
 
-    # TODO: Do this in batches
-    prices_task = compute_prices.remote(query_points, data_points)
-    prices = ray.get(prices_task)
+    query_points = create_query_points(1000)
+    batch_size = 1000
+
+    query_point_batches = [
+        query_points[:, i : i + batch_size]
+        for i in range(0, query_points.shape[1] // batch_size * batch_size, batch_size)
+    ]
+    logger.info(f"Submitting {len(query_point_batches)} batches of query points")
+
+    # Compute prices for the query points
+    prices = ray.get(
+        [
+            compute_prices.remote(query_point_batch, data_points_ref)
+            for query_point_batch in query_point_batches
+        ]
+    )
+    prices = np.concatenate(prices)
     output_df = pl.DataFrame(
         {
             "x": query_points[0],
@@ -134,5 +149,4 @@ if __name__ == "__main__":
             "price": prices,
         }
     )
-    output_df.write_parquet("grid.parquet")
-    logger.info("Saved grid.parquet")
+    print(output_df)
