@@ -23,3 +23,4 @@ but we cannot guarantee this and we cannot provide support for this.
 
 1. [Optimisation with JAX and Numba](./02-knn-optimisation.ipynb): Directly [Open in Colab](https://colab.research.google.com/github/coobas/europython-25/blob/main/02-knn-optimisation.ipynb)
 2. [JAX on GPU](./03-jax-gpu.ipynb): Directly [Open in Colab](https://colab.research.google.com/github/coobas/europython-25/blob/main/03-jax-gpu.ipynb)
+3. [Parallelisation with Ray](04-ray.ipynb): Directly [Open in Colab](https://colab.research.google.com/github/coobas/europython-25/blob/main/04-ray.ipynb)
