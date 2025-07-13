@@ -15,28 +15,32 @@ LIMIT = 10
 DEFAULT_K = 4
 
 
-def calculate_distances(query_points: np.ndarray, dataset: np.ndarray) -> np.ndarray:
+def calculate_distances(query_points: np.ndarray, reference_points: np.ndarray) -> np.ndarray:
     """
-    Calculate mutual distances between M query and N reference points.
+    Calculate mutual Euclidean distances between M query and N reference points.
+
+    Parameters:
+    ----------
+    query_points: np.ndarray
+        (M, 3) array of query points
+    reference_points: np.ndarray
+        (N, 3+) array of reference points
 
     Returns:
     --------
     distances: np.ndarray
-        (N, M) array of the distances
+        (M, N) array of the distances
     """
     # Expand for broadcasting
-    query_points = query_points[:, :, np.newaxis]
-    dataset = dataset[:3, np.newaxis]
-    return np.sqrt(np.sum((dataset - query_points) ** 2, axis=0))
+    query_points = query_points[:, np.newaxis,:3]
+    reference_points = reference_points[np.newaxis, :, :3]
+    return np.sqrt(np.sum((reference_points - query_points) ** 2, axis=-1))
 
 
-
-# @ray.remote
 def knn_search(
     query_points: np.ndarray,
-    dataset: np.ndarray,
+    reference_points: np.ndarray,
     k: int,
-    distances_func=calculate_distances,
 ):
     """
     Find k nearest neighbour reference point indices for N query points.
@@ -45,11 +49,9 @@ def knn_search(
     --------
     indices: np.ndarray
         (N, k) matrix of integral indices
-
     """
-    distances = distances_func(query_points, dataset).T
-    nearest_indices = np.argpartition(distances, k, axis=0)[:k].T
-    return nearest_indices
+    distances = calculate_distances(query_points, reference_points).T
+    return np.argpartition(distances, k, axis=0)[:k].T
 
 
 def create_grid(n_points: int = N_POINTS) -> tuple[np.ndarray, ...]:
@@ -59,10 +61,11 @@ def create_grid(n_points: int = N_POINTS) -> tuple[np.ndarray, ...]:
     Returns:
     --------
     x: np.ndarray
-        Flattened (N_POINTS x N_POINTS,) array of x values
+        Flattened (n_points x n_points,) array of x values
     y: np.ndarray
-        Flattened (N_POINTS x N_POINTS,) array of x values
+        Flattened (n_points x n_points,) array of x values
     """
+    # Note: Tested indirectly via `create_query_points`
     # TODO: Add floor
     x = np.linspace(-LIMIT, LIMIT, n_points)
     y = np.linspace(-LIMIT, LIMIT, n_points)
@@ -79,7 +82,7 @@ def create_query_points(n_points: int = N_POINTS, floor: int = 1) -> np.ndarray:
         (n_points x n_points, 3) array of query points
     """
     x, y = create_grid(n_points=n_points)
-    return np.vstack([x, y, np.ones(x.shape[0]) * floor])
+    return np.vstack([x, y, np.ones(x.shape[0]) * floor]).T
 
 
 @ray.remote
