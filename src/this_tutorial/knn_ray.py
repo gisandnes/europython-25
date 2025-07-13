@@ -2,7 +2,7 @@
 import logging
 from pathlib import Path
 
-import polars as pl
+import pandas as pd
 import numpy as np
 import ray
 
@@ -10,9 +10,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-N_POINTS = 10
-LIMIT = 10
-DEFAULT_K = 4
+N_POINTS = 10   # Default number of points in each dimension for the grid
+LIMIT = 10.0    # +/- Span of the grid
+DEFAULT_K = 4   # How many nearest neighbors to consider
 
 
 def calculate_distances(query_points: np.ndarray, reference_points: np.ndarray) -> np.ndarray:
@@ -108,7 +108,7 @@ def compute_prices(query_points, reference_points, k: int = DEFAULT_K):
     return prices.mean(axis=1)
 
 
-def load_data_points(path: Path = Path("data.parquet")) -> np.ndarray:
+def load_reference_points(path: Path = Path("data.parquet")) -> np.ndarray:
     """
     Load reference data points from a Parquet file.
 
@@ -118,46 +118,66 @@ def load_data_points(path: Path = Path("data.parquet")) -> np.ndarray:
         (N, 4) array of data points with x, y, floor, and price columns
     """
 
-    df = pl.read_parquet(path)
-    return np.vstack(
-        [
-            df["x"].to_numpy(),
-            df["y"].to_numpy(),
-            df["floor"].to_numpy(),
-            df["price"].to_numpy(),
-        ]
+    df = pd.read_parquet(path)
+    return df[["x", "y", "floor", "price"]].to_numpy().astype(float)
+
+
+def combine_points_and_prices(
+    query_points: np.ndarray, prices: np.ndarray
+) -> pd.DataFrame:
+    """
+    Prepare human-friendly output from numpy arrays.
+
+    Parameters:
+    ----------
+    query_points: np.ndarray
+        (N, 3) array of query points
+    prices: np.ndarray
+        (N,) array of prices
+
+    Returns:
+    --------
+    df: pd.DataFrame
+        DataFrame with columns x, y, floor, price
+    """
+    return pd.DataFrame(
+        {
+            "x": query_points[:,0],
+            "y": query_points[:,1],
+            "floor": query_points[:,2],
+            "price": prices,
+        }
     )
+
+
+compute_prices_ray = ray.remote(compute_prices)
 
 
 if __name__ == "__main__":
     ray.init()
 
-    data_points = load_data_points()
+    data_points = load_reference_points()
     data_points_ref = ray.put(data_points)  # Store this
 
     query_points = create_query_points(1000)
     batch_size = 1000
 
     query_point_batches = [
-        query_points[:, i : i + batch_size]
-        for i in range(0, query_points.shape[1] // batch_size * batch_size, batch_size)
+        query_points[i : i + batch_size, :]
+        for i in range(0, query_points.shape[0] // batch_size * batch_size, batch_size)
     ]
     logger.info(f"Submitting {len(query_point_batches)} batches of query points")
 
     # Compute prices for the query points
     prices = ray.get(
         [
-            compute_prices.remote(query_point_batch, data_points_ref)
+            compute_prices_ray.remote(query_point_batch, data_points_ref)
             for query_point_batch in query_point_batches
         ]
     )
     prices = np.concatenate(prices)
-    output_df = pl.DataFrame(
-        {
-            "x": query_points[0],
-            "y": query_points[1],
-            "floor": query_points[2],
-            "price": prices,
-        }
+    output_df = combine_points_and_prices(
+        query_points=query_points,
+        prices=prices,
     )
     print(output_df)
