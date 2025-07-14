@@ -146,10 +146,29 @@ def combine_points_and_prices(
         {
             "x": query_points[:,0],
             "y": query_points[:,1],
-            "floor": query_points[:,2],
+            "floor": query_points[:,2].astype(int),
             "price": prices,
         }
     )
+
+
+def split_into_batches(array: np.ndarray, max_size: int) -> list[np.ndarray]:
+    """
+    Split an array into smaller batches of a maximum size.
+
+    Parameters:
+    ----------
+    array: np.ndarray
+        The array to split.
+    max_size: int
+        The maximum size of each batch.
+
+    Returns:
+    --------
+    list[np.ndarray]
+        A list of arrays, each with a maximum size of `max_size`.
+    """
+    return [array[i:i + max_size] for i in range(0, len(array), max_size)]
 
 
 compute_prices_ray = ray.remote(compute_prices)
