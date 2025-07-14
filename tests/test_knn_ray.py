@@ -1,7 +1,8 @@
 import numpy as np
 from numpy.testing import assert_allclose
+import pytest
 
-from this_tutorial.knn_ray import create_grid, create_query_points, calculate_distances, knn_search, compute_prices
+from this_tutorial.knn_ray import create_grid, create_query_points, calculate_distances, knn_search, compute_prices, split_into_batches
 
 
 def test_create_grid():
@@ -62,3 +63,24 @@ def test_compute_prices():
     expected_prices = np.array([6.5, 5.5])
     
     assert_allclose(prices, expected_prices)
+
+
+@pytest.mark.parametrize(
+    ("points", "batch_size", "n_batches", "last_batch_size"),
+    [
+        (99, 10, 10, 9),
+        (100, 10, 10, 10),
+        (101, 10, 11, 1),
+        (1, 1, 1, 1),
+    ]
+)
+def test_split_into_batches(points, batch_size, n_batches, last_batch_size):
+    query_points = np.random.rand(points, 3)
+    batches = split_into_batches(query_points, batch_size)
+    
+    assert len(batches) == n_batches
+    for batch in batches:
+        assert batch.shape[0] <= batch_size
+        assert batch.shape[1] == 3
+
+    batches[-1].shape[0] == last_batch_size
