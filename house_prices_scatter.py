@@ -10,7 +10,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from house_price_model import house_price_model
-from knn_jax import KNNRegressor
+from this_tutorial.knn_jax import KNNRegressor
 
 
 def generate_scattered_data(

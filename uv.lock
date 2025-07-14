@@ -23,6 +23,7 @@ dependencies = [
     { name = "pytest" },
     { name = "ray", extra = ["default"] },
     { name = "scikit-learn" },
+    { name = "scipy" },
     { name = "seaborn" },
 ]
 
@@ -49,6 +50,7 @@ requires-dist = [
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "ray", extras = ["default"], specifier = ">=2.45.0" },
     { name = "scikit-learn", specifier = ">=1.6.1" },
+    { name = "scipy", specifier = ">=1.15.3" },
     { name = "seaborn", specifier = ">=0.13.2" },
 ]
 provides-extras = ["gpu"]
