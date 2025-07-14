@@ -8,3 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+
+
+# Cursor AI specific files
+.cursor-chat-context.md
+.cursorrules
+
+# Visualisation files
+*.html

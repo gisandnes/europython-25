@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 
-import knn_numpy
+from this_tutorial import knn_numpy
 
 
 def test_knn_numpy_matches_sklearn(dataset, query_points, k):
@@ -31,9 +31,7 @@ def test_knn_numpy_matches_sklearn(dataset, query_points, k):
         # Get all k neighbor points for this query point
         neighbor_points = dataset[test_indices_np[i, :]]  # Shape: (k, dims)
         # Calculate distances to all neighbors at once using broadcasting
-        test_distances_np[i, :] = np.sqrt(
-            np.sum((query_points[i] - neighbor_points) ** 2, axis=1)
-        )
+        test_distances_np[i, :] = np.sqrt(np.sum((query_points[i] - neighbor_points) ** 2, axis=1))
 
     # Sort distances for comparison (since neighbor order might differ)
     sklearn_distances_sorted = np.sort(distances, axis=1)

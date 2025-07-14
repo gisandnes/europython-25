@@ -81,10 +81,6 @@ def knn_search(
         # Get distances for this query point
         query_distances = distances[:, i]
         # Find indices of k smallest distances
-        k_indices = quickselect_k_indices(query_distances, k)
-        # Sort the k indices by distance for consistent ordering
-        k_distances = query_distances[k_indices]
-        sorted_order = np.argsort(k_distances)
-        nearest_indices[i] = k_indices[sorted_order]
+        nearest_indices[i] = quickselect_k_indices(query_distances, k)
 
     return nearest_indices
