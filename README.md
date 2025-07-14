@@ -5,7 +5,7 @@ Materials for the [*Accelerating Scientific Python: JAX, Numba, and Ray in Actio
 ## Preparation with Google Colab
 
 We will use Google Colab for the tutorial.
-Colab provides an out of the box Jupyter notebook environment with all the necessary libraries installed.
+Colab provides a ready-to-use Jupyter notebook environment with all the necessary libraries installed.
 And it provides free GPU and TPU access, which is crucial for the tutorial.
 
 You will need to have a (free) Google account to use Colab. Please create one if you don't have one yet.
@@ -16,10 +16,10 @@ Please click the *Open in Colab* button below to open the preparation notebook d
 
 (raw link: https://colab.research.google.com/github/coobas/europython-25/blob/main/01-preparation.ipynb)
 
-The code is able to run on other environments, e.g. you local machine,
-but we cannot guarantee this and we cannot provide support for this.
+The code can run on other environments, e.g. on your local machine,
+though we recommend using Google Colab as we cannot provide support for local environment issues.
 
-## Tutorial content
+## Tutorial Notebooks
 
 1. [Optimisation with JAX and Numba](./02-knn-optimisation.ipynb): Directly [Open in Colab](https://colab.research.google.com/github/coobas/europython-25/blob/main/02-knn-optimisation.ipynb)
 2. [JAX on GPU](./03-jax-gpu.ipynb): Directly [Open in Colab](https://colab.research.google.com/github/coobas/europython-25/blob/main/03-jax-gpu.ipynb)
