@@ -15,16 +15,18 @@ LIMIT = 10.0    # +/- Span of the grid
 DEFAULT_K = 4   # How many nearest neighbors to consider
 
 
-def calculate_distances(query_points: np.ndarray, reference_points: np.ndarray) -> np.ndarray:
+def calculate_distances(query_points: np.ndarray, reference_points: np.ndarray, *, n_dim: int = 3) -> np.ndarray:
     """
     Calculate mutual Euclidean distances between M query and N reference points.
 
     Parameters:
     ----------
     query_points: np.ndarray
-        (M, 3) array of query points
+        (M, n_dim+) array of query points
     reference_points: np.ndarray
-        (N, 3+) array of reference points
+        (N, n_dim+) array of reference points
+    n_dim: int
+        Number of dimensions to consider (default: 3, for x, y, floor)
 
     Returns:
     --------
@@ -32,8 +34,8 @@ def calculate_distances(query_points: np.ndarray, reference_points: np.ndarray) 
         (M, N) array of the distances
     """
     # Expand for broadcasting
-    query_points = query_points[:, np.newaxis,:3]
-    reference_points = reference_points[np.newaxis, :, :3]
+    query_points = query_points[:, np.newaxis,:n_dim]
+    reference_points = reference_points[np.newaxis, :, :n_dim]
     return np.sqrt(np.sum((reference_points - query_points) ** 2, axis=-1))
 
 
