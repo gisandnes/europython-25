@@ -146,7 +146,7 @@ def combine_points_and_prices(
         {
             "x": query_points[:,0],
             "y": query_points[:,1],
-            "floor": query_points[:,2],
+            "floor": query_points[:,2].astype(int),
             "price": prices,
         }
     )
